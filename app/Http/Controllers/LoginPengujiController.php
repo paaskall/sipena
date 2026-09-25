@@ -27,45 +27,34 @@ class LoginPengujiController extends Controller
             'password' => 'required|string',
         ]);
 
-        // Cari user berdasarkan email ATAU username
         $user = LoginPenguji::where('email', $request->email)
             ->orWhere('username', $request->email)
             ->first();
 
         if (!$user) {
-            return back()->withErrors([
-                'email' => 'Email/Username tidak ditemukan.',
-            ])->withInput();
+            return back()->withErrors(['email' => 'Email/Username tidak ditemukan.'])->withInput();
         }
 
-        // Cek password
         if (!Hash::check($request->password, $user->password)) {
-            return back()->withErrors([
-                'password' => 'Password salah.',
-            ])->withInput();
+            return back()->withErrors(['password' => 'Password salah.'])->withInput();
         }
 
-        // Cek status aktif
         if (!$user->is_active) {
-            return back()->withErrors([
-                'email' => 'Akun Anda tidak aktif. Hubungi admin.',
-            ])->withInput();
+            return back()->withErrors(['email' => 'Akun Anda tidak aktif. Hubungi admin.'])->withInput();
         }
 
-        // Login berhasil
         Auth::login($user, $request->remember);
         $user->update(['last_login_at' => now()]);
 
-        // Simpan info ke session
         session([
             'user_id'      => $user->id,
             'nama_penguji' => $user->nama,
+            'email'        => $user->email,
             'role'         => $user->role,
             'tipe_penguji' => $user->tipe_penguji,
             'kelompok'     => $user->kelompok,
         ]);
 
-        // Redirect berdasarkan role
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }

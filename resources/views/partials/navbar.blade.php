@@ -1,21 +1,20 @@
-{{-- ================= NAVBAR ================= --}}
-<header class="sticky top-0 z-20 flex items-center justify-between bg-white px-6 py-4 shadow-sm">
+@php
+    $namaUser   = session('nama_penguji', 'User');
+    $emailUser  = session('email', '-');
+    $roleUser   = session('role', 'penguji');
+    $tipeUser   = session('tipe_penguji', '-');
+    $subtitle   = $roleUser === 'admin' ? 'Administrator' : 'Penguji ' . ucfirst($tipeUser);
+@endphp
 
-    {{-- Kiri: Hamburger (mobile) --}}
+<header class="sticky top-0 z-20 flex items-center justify-between bg-white px-6 py-4 shadow-sm">
     <button id="sidebarToggle" class="text-gray-500 hover:text-gray-800 lg:hidden">
         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M4 6h16M4 12h16M4 18h16"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         </svg>
     </button>
-    <div class="hidden lg:block">
-        {{-- Placeholder kiri kosong --}}
-    </div>
+    <div class="hidden lg:block"></div>
 
-    {{-- Kanan: User --}}
     <div class="flex items-center gap-6">
-
-        {{-- User Info + Dropdown --}}
         <div class="relative">
             <button id="userMenuButton" class="flex items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-gray-50">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -24,34 +23,19 @@
                     </svg>
                 </div>
                 <div class="hidden text-left sm:block">
-                    <p class="text-sm font-bold text-gray-800">{{ session('nama_penguji', 'Dr. Muhammad Aswad, M.Si') }}</p>
-                    <p class="text-xs text-gray-500">
-                        @if (session('role') === 'admin')
-                            Administrator
-                        @else
-                            Penguji {{ ucfirst(session('tipe_penguji', 'wawancara')) }}
-                        @endif
-                    </p>
+                    <p class="text-sm font-bold text-gray-800">Dr. Muhammad Aswad, M.Si</p>
+                    <p class="text-xs text-gray-500">Penguji 1</p>
                 </div>
                 <svg id="chevronIcon" class="h-4 w-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
             </button>
 
-            {{-- Dropdown --}}
-            <div id="userDropdown" 
+            <div id="userDropdown"
                  class="absolute right-0 top-full mt-2 hidden w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-
-                {{-- Header --}}
                 <div class="border-b border-gray-100 px-4 py-3">
-                    <p class="text-sm font-bold text-gray-800">{{ session('nama_penguji', 'Pengguna') }}</p>
-                    <p class="text-xs text-gray-500">
-                        @if (session('role') === 'admin')
-                            admin@lanri.go.id
-                        @else
-                            aswad@lanri.go.id
-                        @endif
-                    </p>
+                    <p class="text-sm font-bold text-gray-800">Dr. Muhammad Aswad, M.Si</p>
+                    <p class="text-xs text-gray-500">aswad@lanri.go.id</p>
                 </div>
 
                 {{-- Menu: Profil Saya --}}
@@ -64,7 +48,7 @@
                     Profil Saya
                 </a>
 
-                {{-- Menu: Pengaturan --}}
+                {{-- Menu: Pengaturan (opsional) --}}
                 <a href="#" 
                    class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50">
                     <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,20 +61,18 @@
 
                 <div class="border-t border-gray-100"></div>
 
-                {{-- Menu: Keluar dengan SweetAlert --}}
-                <form method="POST" action="{{ route('logout.penguji') }}" id="formLogout" class="hidden">
+                {{-- Menu: Keluar --}}
+                <form method="POST" action="{{ route('logout.penguji') }}">
                     @csrf
+                    <button type="submit" 
+                            class="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 transition hover:bg-red-50">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        Keluar
+                    </button>
                 </form>
-                
-                <button type="button" 
-                        onclick="konfirmasiLogout()"
-                        class="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 transition hover:bg-red-50">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    Keluar
-                </button>
             </div>
         </div>
     </div>
@@ -103,25 +85,22 @@
         const chevron = document.getElementById('chevronIcon');
 
         if (userButton && dropdown) {
-            // Klik tombol user → toggle dropdown
             userButton.addEventListener('click', function(e) {
                 e.stopPropagation();
                 dropdown.classList.toggle('hidden');
 
+                // Putar chevron saat dropdown terbuka
                 if (chevron) {
                     chevron.classList.toggle('rotate-180');
                 }
             });
 
-            // Klik di luar → tutup dropdown
             document.addEventListener('click', function() {
                 dropdown.classList.add('hidden');
-                if (chevron) {
-                    chevron.classList.remove('rotate-180');
-                }
+                if (chevron) chevron.classList.remove('rotate-180');
             });
 
-            // Klik di dalam dropdown → jangan tutup
+            // Klik di dalam dropdown → jangan tutup (kecuali link)
             dropdown.addEventListener('click', function(e) {
                 if (!e.target.closest('a') && !e.target.closest('button')) {
                     e.stopPropagation();

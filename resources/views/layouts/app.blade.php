@@ -33,17 +33,6 @@
         .delay-200 { animation-delay: 0.2s; }
         .delay-300 { animation-delay: 0.3s; }
         .delay-400 { animation-delay: 0.4s; }
-
-        /* Custom SweetAlert2 */
-        .swal2-popup {
-            border-radius: 1rem !important;
-            font-family: 'Inter', sans-serif !important;
-        }
-        .swal2-confirm, .swal2-cancel {
-            border-radius: 0.5rem !important;
-            font-weight: 600 !important;
-            padding: 0.625rem 1.5rem !important;
-        }
     </style>
 
     @stack('styles')

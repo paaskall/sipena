@@ -16,10 +16,10 @@
     </div>
 
     @php
-        $totalPeserta = count($semuaPeserta);
-        $totalSudah = count($sudahDinilai);
-        $totalBelum = $totalPeserta - $totalSudah;
-        $persen = $totalPeserta > 0 ? round(($totalSudah / $totalPeserta) * 100) : 0;
+        $totalPeserta = $totalPeserta ?? count($semuaPeserta);
+        $totalSudah   = count($sudahDinilai);
+        $totalBelum   = $totalPeserta - $totalSudah;
+        $persen       = $totalPeserta > 0 ? round(($totalSudah / $totalPeserta) * 100) : 0;
     @endphp
 
     {{-- STAT CARDS --}}
@@ -95,7 +95,7 @@
         </div>
     </div>
 
-    {{-- TABEL PESERTA (HANYA 5 TERBARU) --}}
+    {{-- TABEL PESERTA (5 TERBARU) --}}
     <div class="animate-fade-up delay-400 rounded-xl bg-white p-6 shadow-sm">
         <div class="mb-4 flex items-center justify-between">
             <div>
@@ -123,15 +123,15 @@
                     </tr>
                 </thead>
                 <tbody class="text-gray-700">
-                    @foreach ($pesertaTerbaru as $i => $p)
+                    @forelse ($pesertaTerbaru as $i => $p)
                         @php
-                            $isSudahDinilai = in_array($p[0], $sudahDinilai);
+                            $isSudahDinilai = in_array($p->id, $sudahDinilai);
                         @endphp
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-4 py-3">{{ $i + 1 }}</td>
-                            <td class="px-4 py-3 font-medium">{{ $p[0] }}</td>
-                            <td class="px-4 py-3">{{ $p[1] }}</td>
-                            <td class="px-4 py-3">{{ $p[2] }}</td>
+                            <td class="px-4 py-3 font-medium">{{ $p->nama }}</td>
+                            <td class="px-4 py-3">{{ $p->instansi }}</td>
+                            <td class="px-4 py-3">{{ $p->jabatan }}</td>
                             <td class="px-4 py-3">
                                 @if ($isSudahDinilai)
                                     <span class="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">Sudah Dinilai</span>
@@ -140,7 +140,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
-                                <a href="{{ route('peserta.penilaian') }}?buka={{ urlencode($p[0]) }}"
+                                <a href="{{ route('penilaian.form', $p->id) }}"
                                    class="inline-block rounded-lg px-4 py-1.5 text-xs font-semibold 
                                           {{ $isSudahDinilai 
                                              ? 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50' 
@@ -149,7 +149,13 @@
                                 </a>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-400">
+                                Belum ada peserta yang ditugaskan kepada Anda.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

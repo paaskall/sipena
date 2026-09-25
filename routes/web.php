@@ -3,38 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use App\Http\Controllers\LoginPengujiController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\PesertaController;
+use App\Http\Controllers\PenilaianController;
+use App\Http\Controllers\ExportController;
 use App\Models\LoginPenguji;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes — 4 Penguji + Admin
-|--------------------------------------------------------------------------
-*/
-
-// ============ HELPER: DATA PESERTA ============
-if (!function_exists('dataPeserta')) {
-    function dataPeserta() {
-        // [nama, instansi, jabatan, butuh_tertulis]
-        // butuh_tertulis = true → Perpindahan Jabatan (butuh wawancara + tertulis)
-        return [
-            ['Andi Pratama', 'Kota Magelang', 'Analis Kepegawaian', false],
-            ['Siti Nurhaliza', 'Kab. Semarang', 'Kepala Sub Bidang', true],
-            ['Budi Santoso', 'Pemprov Jawa Tengah', 'Auditor Muda', false],
-            ['Rina Oktaviani', 'Kab. Kebumen', 'Perencana Ahli Muda', true],
-            ['Dedi Kurniawan', 'Kota Surakarta', 'Penyuluh Sosial', false],
-            ['Putri Anggraini', 'Kab. Wonogiri', 'Analis SDM Aparatur', true],
-            ['Fahri Ramadhan', 'Kab. Boyolali', 'Kepala Seksi', false],
-            ['Nabila Safitri', 'Kab. Klaten', 'Pranata Komputer', true],
-            ['Rizky Maulana', 'Kab. Sukoharjo', 'Analis Kebijakan', false],
-            ['Lina Marlina', 'Kab. Karanganyar', 'Bendahara Pengeluaran', true],
-        ];
-    }
-}
-
-// ============ HELPER: REKAN PENGUJI ============
 if (!function_exists('getRekanPenguji')) {
     function getRekanPenguji($tipePenguji, $currentUserId) {
-        // Ambil penguji lain dengan tipe sama (selain diri sendiri)
         return LoginPenguji::where('role', 'penguji')
             ->where('tipe_penguji', $tipePenguji)
             ->where('id', '!=', $currentUserId)
@@ -42,94 +18,99 @@ if (!function_exists('getRekanPenguji')) {
     }
 }
 
-// ============ LOGIN ============
 Route::get('/login-penguji', [LoginPengujiController::class, 'showLoginForm'])->name('login.penguji');
 Route::post('/login-penguji', [LoginPengujiController::class, 'login'])->name('login.penguji.submit');
 Route::post('/logout-penguji', [LoginPengujiController::class, 'logout'])->name('logout.penguji');
 
-// ============ DASHBOARD PENGUJI ============
-Route::get('/dashboard-penguji', function () {
-    $semuaPeserta = dataPeserta();
-    $tipePenguji = Session::get('tipe_penguji', 'wawancara');
-    $namaPenguji = Session::get('nama_penguji', 'Penguji');
-    $userId = Session::get('user_id');
+Route::middleware('penguji')->group(function () {
 
-    if ($tipePenguji === 'tertulis') {
-        $semuaPeserta = array_filter($semuaPeserta, fn($p) => $p[3] === true);
-        $semuaPeserta = array_values($semuaPeserta);
-    }
+    Route::get('/dashboard-penguji', function () {
+        $tipePenguji = Session::get('tipe_penguji', 'wawancara');
+        $namaPenguji = Session::get('nama_penguji', 'Penguji');
+        $userId      = Session::get('user_id');
 
-    $sudahDinilai = Session::get('sudah_dinilai_' . $tipePenguji, []);
-    $pesertaTerbaru = array_slice($semuaPeserta, 0, 5);
+        $rekanPenguji = getRekanPenguji($tipePenguji, $userId);
 
-    $rekanPenguji = getRekanPenguji($tipePenguji, $userId);
+        $pesertaTerbaru = \App\Models\Peserta::whereHas('pengujis', function ($q) use ($userId) {
+                                $q->where('penguji_id', $userId);
+                            })
+                            ->orderBy('nama')
+                            ->take(5)
+                            ->get();
 
-    return view('dashboard-penguji', compact(
-        'pesertaTerbaru', 'sudahDinilai', 'tipePenguji', 'namaPenguji', 'semuaPeserta', 'rekanPenguji'
-    ));
-})->name('dashboard.penguji');
+        $totalPeserta = \App\Models\Peserta::whereHas('pengujis', function ($q) use ($userId) {
+                                $q->where('penguji_id', $userId);
+                            })->count();
 
-// ============ PESERTA & PENILAIAN ============
-Route::get('/peserta-penilaian', function () {
-    $peserta = dataPeserta();
-    $tipePenguji = Session::get('tipe_penguji', 'wawancara');
-    $namaPenguji = Session::get('nama_penguji', 'Penguji');
-    $userId = Session::get('user_id');
+        $sudahDinilai = \App\Models\Penilaian::where('penguji_id', $userId)
+                            ->where('tipe', $tipePenguji)
+                            ->where('is_final', true)
+                            ->distinct('peserta_id')
+                            ->pluck('peserta_id')->toArray();
 
-    if ($tipePenguji === 'tertulis') {
-        $peserta = array_filter($peserta, fn($p) => $p[3] === true);
-        $peserta = array_values($peserta);
-    }
+        $semuaPeserta = \App\Models\Peserta::whereHas('pengujis', function ($q) use ($userId) {
+                                $q->where('penguji_id', $userId);
+                            })->get();
 
-    $sudahDinilai = Session::get('sudah_dinilai_' . $tipePenguji, []);
-    $rekanPenguji = getRekanPenguji($tipePenguji, $userId);
+        return view('dashboard-penguji', compact(
+            'pesertaTerbaru', 'sudahDinilai', 'tipePenguji',
+            'namaPenguji', 'semuaPeserta', 'rekanPenguji', 'totalPeserta'
+        ));
+    })->name('dashboard.penguji');
 
-    return view('peserta-penilaian', compact(
-        'peserta', 'sudahDinilai', 'tipePenguji', 'namaPenguji', 'rekanPenguji'
-    ));
-})->name('peserta.penilaian');
+    Route::get('/peserta-penilaian', [PenilaianController::class, 'index'])->name('peserta.penilaian');
+    Route::get('/peserta-penilaian/{pesertaId}/form', [PenilaianController::class, 'form'])->name('penilaian.form');
+    Route::post('/peserta-penilaian/{pesertaId}/simpan', [PenilaianController::class, 'simpan'])->name('penilaian.simpan');
 
-// ============ SIMPAN PENILAIAN ============
-Route::post('/penilaian/simpan', function (\Illuminate\Http\Request $request) {
-    $namaPeserta = $request->input('peserta_nama');
-    $tipePenguji = Session::get('tipe_penguji', 'wawancara');
+    Route::get('/penilaian-berhasil', function () {
+        return view('penilaian-berhasil');
+    })->name('penilaian.berhasil');
 
-    $sudahDinilai = Session::get('sudah_dinilai_' . $tipePenguji, []);
-    if ($namaPeserta && !in_array($namaPeserta, $sudahDinilai)) {
-        $sudahDinilai[] = $namaPeserta;
-        Session::put('sudah_dinilai_' . $tipePenguji, $sudahDinilai);
-    }
+    Route::get('/profil-penguji', function () {
+        $tipePenguji  = Session::get('tipe_penguji', 'wawancara');
+        $namaPenguji  = Session::get('nama_penguji', 'Penguji');
+        $userId       = Session::get('user_id');
+        $rekanPenguji = getRekanPenguji($tipePenguji, $userId);
 
-    return redirect()->route('penilaian.berhasil');
-})->name('penilaian.simpan');
+        return view('profil-penguji', compact('tipePenguji', 'namaPenguji', 'rekanPenguji'));
+    })->name('profil.penguji');
+});
 
-// ============ HALAMAN BERHASIL ============
-Route::get('/penilaian-berhasil', function () {
-    return view('penilaian-berhasil');
-})->name('penilaian.berhasil');
+Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
 
-// ============ PROFIL PENGUJI ============
-Route::get('/profil-penguji', function () {
-    $tipePenguji = Session::get('tipe_penguji', 'wawancara');
-    $namaPenguji = Session::get('nama_penguji', 'Penguji');
-    $userId = Session::get('user_id');
-    $rekanPenguji = getRekanPenguji($tipePenguji, $userId);
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
-    return view('profil-penguji', compact('tipePenguji', 'namaPenguji', 'rekanPenguji'));
-})->name('profil.penguji');
+    // Kelola Penguji
+    Route::get('/kelola-penguji', [AdminController::class, 'kelolaPenguji'])->name('kelola-penguji');
+    Route::post('/kelola-penguji', [AdminController::class, 'storePenguji'])->name('kelola-penguji.store');
+    Route::put('/kelola-penguji/{id}', [AdminController::class, 'updatePenguji'])->name('kelola-penguji.update');
+    Route::delete('/kelola-penguji/{id}', [AdminController::class, 'destroyPenguji'])->name('kelola-penguji.destroy');
 
-// ============ ADMIN DASHBOARD ============
-Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
-})->name('admin.dashboard');
+    // Kelola Peserta
+    Route::get('/kelola-peserta', [PesertaController::class, 'index'])->name('kelola-peserta');
+    Route::get('/kelola-peserta/create', [PesertaController::class, 'create'])->name('kelola-peserta.create');
+    Route::post('/kelola-peserta', [PesertaController::class, 'store'])->name('kelola-peserta.store');
+    Route::get('/kelola-peserta/{id}/edit', [PesertaController::class, 'edit'])->name('kelola-peserta.edit');
+    Route::put('/kelola-peserta/{id}', [PesertaController::class, 'update'])->name('kelola-peserta.update');
+    Route::delete('/kelola-peserta/{id}', [PesertaController::class, 'destroy'])->name('kelola-peserta.destroy');
 
-// ============ RESET ============
-Route::get('/reset-penilaian', function () {
-    Session::forget(['sudah_dinilai_wawancara', 'sudah_dinilai_tertulis']);
-    return redirect()->route('peserta.penilaian');
-})->name('reset.penilaian');
+    // Edit Nilai
+    Route::get('/edit-nilai', [AdminController::class, 'editNilai'])->name('edit-nilai');
+    Route::post('/edit-nilai', [AdminController::class, 'updateNilai'])->name('edit-nilai.update');
 
-// ============ DEFAULT ============
+    // Rekap Nilai
+    Route::get('/rekap-nilai', [AdminController::class, 'rekapNilai'])->name('rekap-nilai');
+
+    // Kelola User
+    Route::get('/kelola-user', [AdminController::class, 'kelolaUser'])->name('kelola-user');
+    Route::post('/kelola-user/{id}/toggle', [AdminController::class, 'toggleUserActive'])->name('kelola-user.toggle');
+    Route::post('/kelola-user/{id}/reset', [AdminController::class, 'resetPassword'])->name('kelola-user.reset');
+
+    // Export
+    Route::get('/export/csv', [ExportController::class, 'csv'])->name('export.csv');
+    Route::get('/export/pdf', [ExportController::class, 'pdf'])->name('export.pdf');
+});
+
 Route::get('/', function () {
     return redirect()->route('login.penguji');
 });
