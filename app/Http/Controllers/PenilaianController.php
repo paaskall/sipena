@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Peserta;
 use App\Models\Penilaian;
+use App\Models\LoginPenguji;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PenilaianController extends Controller
 {
-    /**
-     * Struktur elemen penilaian (hardcode dulu, biar konsisten dengan view lama).
-     */
     public static function elemenWawancara(): array
     {
         return [
@@ -40,13 +38,11 @@ class PenilaianController extends Controller
         ];
     }
 
-    // ============ DAFTAR PESERTA UNTUK PENGUJI ============
     public function index()
     {
-        $userId   = session('user_id');
-        $tipe     = session('tipe_penguji', 'wawancara');
+        $userId = session('user_id');
+        $tipe   = session('tipe_penguji', 'wawancara');
 
-        // Ambil peserta yang ditugaskan ke penguji ini (berdasarkan pivot)
         $pesertas = Peserta::whereHas('pengujis', function ($q) use ($userId) {
                         $q->where('penguji_id', $userId);
                     })
@@ -56,10 +52,20 @@ class PenilaianController extends Controller
                     ->orderBy('nama')
                     ->get();
 
-        return view('peserta-penilaian', compact('pesertas', 'tipe'));
+        $rekanPenguji = LoginPenguji::where('role', 'penguji')
+                        ->where('tipe_penguji', $tipe)
+                        ->where('id', '!=', $userId)
+                        ->first();
+
+        return view('peserta-penilaian', [
+            'pesertas'     => $pesertas,
+            'tipe'         => $tipe,
+            'tipePenguji'  => $tipe,
+            'namaPenguji'  => session('nama_penguji', 'Penguji'),
+            'rekanPenguji' => $rekanPenguji,
+        ]);
     }
 
-    // ============ FORM PENILAIAN PESERTA ============
     public function form($pesertaId)
     {
         $userId = session('user_id');
@@ -73,18 +79,15 @@ class PenilaianController extends Controller
                     }])
                     ->findOrFail($pesertaId);
 
-        // Cek sudah final?
         $sudahFinal = $peserta->penilaians->where('is_final', true)->count() > 0;
 
         $elemen = $tipe === 'wawancara' ? self::elemenWawancara() : self::elemenTertulis();
 
-        // Map penilaian yang sudah ada berdasarkan elemen_index
         $nilaiTersimpan = $peserta->penilaians->keyBy('elemen_index');
 
         return view('form-penilaian', compact('peserta', 'elemen', 'tipe', 'sudahFinal', 'nilaiTersimpan'));
     }
 
-    // ============ SIMPAN PENILAIAN ============
     public function simpan(Request $request, $pesertaId)
     {
         $userId = session('user_id');

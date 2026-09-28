@@ -4,88 +4,94 @@
 
 @section('content')
 
-    {{-- HEADER --}}
-    <div class="mb-6 animate-fade-up">
-        <h1 class="text-2xl font-bold text-gray-800">Peserta & Penilaian</h1>
-        <p class="mt-1 text-sm text-gray-500">
-            Login sebagai:
-            <span class="font-semibold {{ $tipe === 'tertulis' ? 'text-purple-600' : 'text-blue-600' }}">
-                Penguji {{ ucfirst($tipe) }}
-            </span>
-        </p>
-    </div>
-
-    @if ($pesertas->isEmpty())
-        <div class="rounded-xl bg-white p-10 text-center shadow-sm">
-            <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <p class="mt-3 text-sm text-gray-500">Belum ada peserta yang ditugaskan kepada Anda.</p>
+    {{-- ================= DAFTAR PESERTA ================= --}}
+    <div id="sectionDaftar">
+        {{-- HEADER --}}
+        <div class="mb-6 animate-fade-up">
+            <h1 class="text-2xl font-bold text-gray-800">Peserta & Penilaian</h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Login sebagai:
+                <span class="font-semibold {{ $tipe === 'tertulis' ? 'text-purple-600' : 'text-blue-600' }}">
+                    Penguji {{ ucfirst($tipe) }}
+                </span>
+            </p>
         </div>
-    @else
-        <div class="rounded-xl bg-white shadow-sm">
-            <div class="overflow-x-auto scrollbar-thin">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b border-gray-200 bg-gray-50 text-left">
-                            <th class="px-6 py-4 font-semibold text-gray-600">No.</th>
-                            <th class="px-6 py-4 font-semibold text-gray-600">Nama Peserta</th>
-                            <th class="px-6 py-4 font-semibold text-gray-600">Instansi</th>
-                            <th class="px-6 py-4 font-semibold text-gray-600">Jabatan</th>
-                            <th class="px-6 py-4 font-semibold text-gray-600">Status Penilaian</th>
-                            <th class="px-6 py-4 text-center font-semibold text-gray-600">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-700">
-                        @foreach ($pesertas as $i => $p)
-                            @php
-                                $sudahDinilai = $p->penilaians->where('is_final', true)->count() > 0;
-                            @endphp
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="px-6 py-4 text-gray-500">{{ $i + 1 }}</td>
-                                <td class="px-6 py-4 font-semibold text-gray-800">{{ $p->nama }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ $p->instansi }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ $p->jabatan }}</td>
-                                <td class="px-6 py-4">
-                                    @if ($sudahDinilai)
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                                            <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                            </svg>
-                                            Sudah Dinilai
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            Belum Dinilai
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <a href="{{ route('penilaian.form', $p->id) }}"
-                                       class="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold
-                                              {{ $sudahDinilai
-                                                 ? 'border-2 border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
-                                                 : 'bg-blue-600 text-white hover:bg-blue-700' }}">
-                                        {{ $sudahDinilai ? 'Lihat / Edit' : 'Nilai' }}
-                                    </a>
-                                </td>
+
+        @if ($pesertas->isEmpty())
+            <div class="rounded-xl bg-white p-10 text-center shadow-sm">
+                <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="mt-3 text-sm text-gray-500">Belum ada peserta yang ditugaskan kepada Anda.</p>
+            </div>
+        @else
+            <div class="rounded-xl bg-white shadow-sm">
+                <div class="overflow-x-auto scrollbar-thin">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50 text-left">
+                                <th class="px-6 py-4 font-semibold text-gray-600">No.</th>
+                                <th class="px-6 py-4 font-semibold text-gray-600">Nama Peserta</th>
+                                <th class="px-6 py-4 font-semibold text-gray-600">Instansi</th>
+                                <th class="px-6 py-4 font-semibold text-gray-600">Jabatan</th>
+                                <th class="px-6 py-4 font-semibold text-gray-600">Status Penilaian</th>
+                                <th class="px-6 py-4 text-center font-semibold text-gray-600">Aksi</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="text-gray-700">
+                            @foreach ($pesertas as $i => $p)
+                                @php
+                                    $sudahDinilai = $p->penilaians->where('is_final', true)->count() > 0;
+                                @endphp
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="px-6 py-4 text-gray-500">{{ $i + 1 }}</td>
+                                    <td class="px-6 py-4 font-semibold text-gray-800">{{ $p->nama }}</td>
+                                    <td class="px-6 py-4 text-gray-600">{{ $p->instansi }}</td>
+                                    <td class="px-6 py-4 text-gray-600">{{ $p->jabatan }}</td>
+                                    <td class="px-6 py-4">
+                                        @if ($sudahDinilai)
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                                                </svg>
+                                                Sudah Dinilai
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                Belum Dinilai
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        {{-- PERBAIKAN: Tombol memanggil fungsi JS, bukan link href --}}
+                                        <button type="button"
+                                                onclick="bukaFormPenilaian('{{ $p->id }}', '{{ $p->nama }}', '{{ $p->instansi }}', '{{ $p->jabatan }}', {{ $sudahDinilai ? 'true' : 'false' }})"
+                                                class="inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold
+                                                    {{ $sudahDinilai
+                                                        ? 'border-2 border-blue-600 bg-white text-blue-600 hover:bg-blue-50'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700' }}">
+                                            {{ $sudahDinilai ? 'Lihat / Edit' : 'Nilai' }}
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4">
+                    {{-- PERBAIKAN: Gunakan $pesertas->count() --}}
+                    <p class="text-xs text-gray-500">Total: {{ $pesertas->count() }} peserta</p>
+                </div>
             </div>
-            <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4">
-                <p class="text-xs text-gray-500">Total: {{ count($peserta) }} peserta</p>
-            </div>
-        </div>
+        @endif
     </div>
 
-    {{-- ============ FORM PENILAIAN ============ --}}
+    {{-- ================= FORM PENILAIAN ================= --}}
     <div id="sectionForm" class="hidden animate-fade-up">
 
         <nav class="mb-3 flex items-center gap-2 text-xs text-gray-500">
@@ -121,7 +127,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('penilaian.simpan') }}" id="formPenilaian">
+        <form method="POST" action="" id="formPenilaian">
             @csrf
             <input type="hidden" name="peserta_nama" id="inputPesertaNama" value="">
 
@@ -139,7 +145,7 @@
                             <h2 id="infoNamaPeserta" class="text-lg font-bold text-gray-800 truncate">Andi Pratama</h2>
                             <div class="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
                                 <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
                                 <span>Instansi: <span id="infoInstansi" class="text-gray-700 font-medium">Kota Magelang</span></span>
@@ -149,7 +155,7 @@
                     </div>
                     <button type="button" class="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-500 py-2 text-xs font-semibold text-blue-600 transition hover:bg-blue-50">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         Lihat Berkas Peserta
@@ -208,7 +214,6 @@
                 </div>
             </div>
 
-            {{-- TABEL WAWANCARA --}}
             @if ($tipePenguji === 'wawancara')
                 <div class="mb-6 rounded-xl bg-white shadow-sm">
                     <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
@@ -257,7 +262,7 @@
                                         </td>
                                         <td class="px-4 py-3 text-gray-700">{{ $k[2] }}</td>
                                         <td class="px-4 py-3 text-center">
-                                            <input type="number" 
+                                            <input type="number"
                                                    name="wawancara[{{ $i }}]"
                                                    class="input-nilai w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm font-semibold text-blue-700
                                                           focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
@@ -319,7 +324,7 @@
                                         </td>
                                         <td class="px-4 py-3 text-gray-700">{{ $k[2] }}</td>
                                         <td class="px-4 py-3 text-center">
-                                            <input type="number" 
+                                            <input type="number"
                                                    name="tertulis[{{ $i }}]"
                                                    class="input-nilai w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm font-semibold text-purple-700
                                                           focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none"
@@ -374,7 +379,7 @@
                 </div>
 
                 <div class="mt-6 flex items-center justify-end gap-3">
-                    <button type="button" 
+                    <button type="button"
                             class="flex items-center gap-2 rounded-lg border border-blue-500 px-6 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-50">
                         Simpan Draft
                     </button>
@@ -395,11 +400,16 @@
 
 @push('scripts')
 <script>
-    function bukaFormPenilaian(nama, instansi, jabatan, sudahDinilai) {
+    function bukaFormPenilaian(id, nama, instansi, jabatan, sudahDinilai) {
         document.getElementById('infoNamaPeserta').textContent = nama;
         document.getElementById('infoInstansi').textContent = instansi;
         document.getElementById('infoJabatan').textContent = jabatan;
         document.getElementById('inputPesertaNama').value = nama;
+
+        // --- PERBAIKAN: Atur action form secara dinamis ---
+        const form = document.getElementById('formPenilaian');
+        form.action = `/peserta-penilaian/${id}/simpan`;
+        // ---------------------------------------------------
 
         const banner = document.getElementById('bannerSudahDinilai');
         if (sudahDinilai) {
@@ -470,19 +480,24 @@
         inputNilai.forEach(input => input.addEventListener('input', hitungSemua));
         hitungSemua();
 
+        // Logika untuk membuka form otomatis berdasarkan URL ?buka=Nama
         const urlParams = new URLSearchParams(window.location.search);
         const namaBuka = urlParams.get('buka');
 
         if (namaBuka) {
-            const semuaBaris = document.querySelectorAll('#sectionDaftar tbody tr');
+            // Karena tombol sekarang ada di dalam tabel, kita perlu mencari tombolnya
+            const semuaTombol = document.querySelectorAll('#sectionDaftar button');
             let ditemukan = false;
-
-            semuaBaris.forEach(function(row) {
-                const namaPeserta = row.querySelector('td:nth-child(2)').textContent.trim();
-                if (namaPeserta === namaBuka && !ditemukan) {
-                    ditemukan = true;
-                    const tombol = row.querySelector('button');
-                    if (tombol) tombol.click();
+            
+            semuaTombol.forEach(function(tombol) {
+                // Kita cek teks nama di baris yang sama
+                const row = tombol.closest('tr');
+                if (row) {
+                    const namaPeserta = row.querySelector('td:nth-child(2)').textContent.trim();
+                    if (namaPeserta === namaBuka && !ditemukan) {
+                        ditemukan = true;
+                        tombol.click(); // Klik tombol untuk membuka form
+                    }
                 }
             });
         }
